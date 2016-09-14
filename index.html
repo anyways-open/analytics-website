@@ -44,9 +44,7 @@
         var requestId = 0;
         var layers = [];
 
-        var gradient = function (ratio) {
-            var color1 = 'FF0000';
-            var color2 = '22FF22';
+        var gradient2 = function (color1, color2, ratio) {
             var hex = function (x) {
                 x = x.toString(16);
                 return (x.length == 1) ? '0' + x : x;
@@ -57,6 +55,14 @@
             var b = Math.ceil(parseInt(color1.substring(4, 6), 16) * ratio + parseInt(color2.substring(4, 6), 16) * (1 - ratio));
 
             return hex(r) + hex(g) + hex(b);
+        };
+
+        var gradient = function (ratio) {
+            if (ratio > 0.6)
+            {
+                return gradient2('FF0000', '00FF00', (ratio - 0.6) / 0.4);
+            }
+            return gradient2('00FF00', 'FFFFFF', (ratio / 0.6));
         };
 
         map.on('click', function (e) {
