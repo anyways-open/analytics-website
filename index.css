@@ -1,0 +1,274 @@
+﻿html, body, #map {
+    height: 100%;
+    width: 100%;
+    padding: 0px;
+    margin: 0px;
+}
+
+#sidebar {
+    opacity: 0.8;
+    padding: 12px 20px;
+}
+
+#mode-switcher {
+    opacity: 0.8;
+}
+
+.mode-switcher-button {
+    cursor: pointer;
+}
+
+.leaflet-popup-content {
+    width:auto !important;
+}
+
+#distance-flag {
+    background: #2BC1DD;
+    border: solid;
+    border-width: 3px;
+    border-color: white;
+    color: white;
+    padding: 1px 1px 1px 1px;
+    width: 90px;
+    border-radius: 4px;
+}
+
+@font-face {
+    font-family: 'si';
+    src: url('fonts/socicon.eot');
+    src: url('fonts/socicon.eot?#iefix') format('embedded-opentype'),
+         url('fonts/socicon.woff') format('woff'),
+         url('fonts/socicon.ttf') format('truetype'),
+         url('fonts/socicon.svg#icomoonregular') format('svg');
+    font-weight: normal;
+    font-style: normal;
+ 
+}
+ 
+@media screen and (-webkit-min-device-pixel-ratio:0) {
+    @font-face {
+        font-family:si;
+        src: url(fonts/socicon.svg) format(svg);
+    }
+}
+
+.soc {
+    overflow:hidden;
+    margin:0; padding:0;
+    list-style:none;
+}
+
+.soc li {
+    display:inline-block;
+    *display:inline;
+    zoom:1;
+}
+
+.soc li div {
+    font-family:si!important;
+    font-style:normal;
+    font-weight:400;
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+    -webkit-box-sizing:border-box;
+    -moz-box-sizing:border-box;
+    -ms-box-sizing:border-box;
+    -o-box-sizing:border-box;
+    box-sizing:border-box;
+    overflow:hidden;
+    text-decoration:none;
+    text-align:center;
+    display:block;
+    position: relative;
+    z-index: 1;
+    width: 40px;
+    height: 40px;
+    line-height: 40px;
+    font-size: 22px;
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
+    margin-right: 5px;
+    color: #ffffff;
+    background-color: none;
+}
+
+@media only screen and (min-width: 0px) and (max-width: 679px) {
+    .soc li div {
+        font-family:si!important;
+        font-style:normal;
+        font-weight:100;
+        -webkit-font-smoothing:antialiased;
+        -moz-osx-font-smoothing:grayscale;
+        -webkit-box-sizing:border-box;
+        -moz-box-sizing:border-box;
+        -ms-box-sizing:border-box;
+        -o-box-sizing:border-box;
+        box-sizing:border-box;
+        overflow:hidden;
+        text-decoration:none;
+        text-align:center;
+        display:block;
+        position: relative;
+        z-index: 1;
+        width: 10px;
+        height: 10px;
+        line-height: 10px;
+        font-size: 7px;
+        -webkit-border-radius: 1px;
+        -moz-border-radius: 1px;
+        border-radius: 1px;
+        margin-right: 1px;
+        color: #ffffff;
+        background-color: none;
+    }
+}
+
+.soc-icon-last{
+    margin:0 !important;
+}
+
+.soc-twitter {
+    background-color: #4da7de;
+}
+.soc-twitter:before {
+    content:'a';
+}
+.soc-facebook {
+    background-color: #3e5b98;
+}
+.soc-facebook:before {
+    content:'b';
+}
+.soc-google {
+    background-color: #d93e2d;
+}
+.soc-google:before {
+    content:'c';
+}
+.soc-pinterest {
+    background-color: #c92619;
+}
+.soc-pinterest:before {
+    content:'d';
+}
+.soc-linkedin {
+    background-color: #3371b7;
+}
+.soc-linkedin:before {
+    content:'j';
+}
+.soc-rss {
+    background-color: #f26109;
+}
+.soc-rss:before {
+    content:',';
+}
+
+#logo {
+    width: 180px;
+}
+
+@media only screen and (min-width: 0px) and (max-width: 679px) {
+    #logo {
+        width: 45px;
+    }
+}
+
+.helper-start#helper-start {
+    width: 275px; 
+    margin-left: 0px;
+}
+
+.helper-stop#helper-stop {
+    width: 275px; 
+    margin-left: 0px;
+}
+
+.helper-p {
+    color: black;
+    margin: 0px 0px 0px 0px;
+}
+
+.helper-image {
+    float: right;
+    margin: 0px 0px 0px 0px;
+    vertical-align: middle;
+    width: 32px;
+}
+
+.helper-p-sub {
+    margin: 10px 5px 5px 5px;
+}
+
+@media only screen and (min-width: 0px) and (max-width: 679px) {
+    .helper-start#helper-start {
+        width: 100px; 
+        margin-left: 0px;
+        font-size: 8px;
+    }
+
+    .helper-stop#helper-stop {
+        width: 100px; 
+        margin-left: 0px;
+        font-size: 8px;
+    }
+
+    .helper-p {
+        color: black;
+        margin: 0px 0px 0px 0px;
+    }
+
+    .helper-image {
+        float: right;
+        margin: 0px 0px 0px 0px;
+        vertical-align: middle;
+        width: 16px;
+    }
+
+    .helper-p-sub {
+        margin: 3px 1px 1px 1px;
+    }
+}
+
+#routing-parameters {
+    width: 150px;
+    padding: 4px 4px;
+}
+
+.routing-choice-button {
+    width: 36px;
+    height: 36px;
+    display: inline;
+    background: white;
+    border: 3px solid rgb(43, 193, 221);
+    border-image-source: initial;
+    border-image-slice: initial;
+    border-image-width: initial;
+    border-image-outset: initial;
+    border-image-repeat: initial;
+    padding: 1px;
+    border-radius: 4px;
+}
+
+
+.leaflet-control-button-chosen {
+    background: rgb(43, 193, 221);
+}
+
+#agency-icon {
+    background: #2BC1DD;
+    border: solid;
+    border-width: 2px;
+    border-color: white;
+    color: white;
+    padding: 2px 2px 2px 2px;
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+}
+
+#agency-icon img {
+    width: 16px;
+    height: 16px;
+}

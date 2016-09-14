@@ -1,0 +1,97 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Analytics Anyways</title>
+
+    <link rel="stylesheet" href="index.css" type="text/css" />
+    <link rel="stylesheet" href="leaflet/leaflet.css" type="text/css" />
+
+    <script src="leaflet/leaflet-src.js"></script>
+    <script src="jquery/jquery-3.1.0.min.js"></script>
+
+    <script src="app/ANYWAYS.base.js"></script>
+    <script src="app/ANYWAYS.JSONP.js"></script>
+    <script src="app/api/ANYWAYS.api.js"></script>
+
+</head>
+<body>
+    <div id="map"></div>
+	<script>
+        var map = L.map('map').setView([50.7265, 4.5332], 13);
+        var marker = null;
+        var treeLayer = null;
+
+        L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/dark-v9/tiles/256/{z}/{x}/{y}?access_token=pk.eyJ1IjoiZXVyb3N0YXRpb24iLCJhIjoickVCa3JCTSJ9.EdN8BIazD16z2PHyGShqtA', {
+            attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>',
+            maxZoom: 18
+        }).addTo(map);
+
+        var max = 600;
+
+        var gradient = function (ratio) {
+            var color1 = 'FF0000';
+            var color2 = '22FF22';
+            var hex = function (x) {
+                x = x.toString(16);
+                return (x.length == 1) ? '0' + x : x;
+            };
+
+            var r = Math.ceil(parseInt(color1.substring(0, 2), 16) * ratio + parseInt(color2.substring(0, 2), 16) * (1 - ratio));
+            var g = Math.ceil(parseInt(color1.substring(2, 4), 16) * ratio + parseInt(color2.substring(2, 4), 16) * (1 - ratio));
+            var b = Math.ceil(parseInt(color1.substring(4, 6), 16) * ratio + parseInt(color2.substring(4, 6), 16) * (1 - ratio));
+
+            return hex(r) + hex(g) + hex(b);
+        };
+
+        map.on('click', function (e) {
+            var loc = e.latlng;
+
+            if (marker) {
+                map.removeLayer(marker);
+            }
+            marker = L.marker(loc, {
+                //draggable: true,
+                icon: L.icon({
+                    iconUrl: 'images/marker-source.png',
+                    iconAnchor: [12, 35],
+                    iconSize: [25, 35],
+                    shadowUrl: 'images/marker-shadow.png'
+                })
+            }).addTo(map);
+
+            ANYWAYS.api.tree('http://routing-api-69be5462-1.2b0a5d78.cont.dockerapp.io:32768/belgium',
+            {
+                profile: 'car',
+                locations: [{
+                    lat: loc.lat,
+                    lon: loc.lng
+                }],
+                max: max
+            }, function (response, currentId, options) {
+                if (treeLayer) {
+                    map.removeLayer(treeLayer);
+                }
+
+                treeLayer = L.geoJson(response, {
+                    style: function(feature) {
+                        if (feature.properties && feature.properties.start_weight) {
+                            var ratio = feature.properties.start_weight / max;
+                            var color = '#' + gradient(ratio);
+                            var weight = 4 * (1 - ratio);
+                            return {
+                                weight: weight,
+                                color: color,
+                                opacity: 1
+                            };
+                        }
+                    }
+                }).addTo(map);
+            }, function (response, currentId, options) {
+                console.log('ERROR:' + response);
+            }, this);
+        });
+	</script>
+</body>
+</html>
