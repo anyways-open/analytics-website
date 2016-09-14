@@ -7,8 +7,10 @@
 
     <link rel="stylesheet" href="index.css" type="text/css" />
     <link rel="stylesheet" href="leaflet/leaflet.css" type="text/css" />
+    <link rel="stylesheet" href="leaflet-control-geocoder/Control.Geocoder.css" type="text/css" />
 
     <script src="leaflet/leaflet-src.js"></script>
+    <script src="leaflet-control-geocoder/Control.Geocoder.js"></script>
     <script src="jquery/jquery-3.1.0.min.js"></script>
 
     <script src="app/ANYWAYS.base.js"></script>
@@ -21,14 +23,26 @@
 	<script>
         var map = L.map('map').setView([50.7265, 4.5332], 13);
         var marker = null;
-        var treeLayer = null;
 
         L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/dark-v9/tiles/256/{z}/{x}/{y}?access_token=pk.eyJ1IjoiZXVyb3N0YXRpb24iLCJhIjoickVCa3JCTSJ9.EdN8BIazD16z2PHyGShqtA', {
             attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>',
             maxZoom: 18
         }).addTo(map);
 
-        var max = 300;
+        // add and create routing control.
+        var geocodingcontrol = L.Control.geocoder({
+                geocoder: L.Control.Geocoder.nominatim()
+            });
+        geocodingcontrol.markGeocode = function (result) {
+            if (result.center) {
+                map.panTo(result.center);
+            }
+        };
+        geocodingcontrol.addTo(map);
+
+        var max = 450;
+        var requestId = 0;
+        var layers = [];
 
         var gradient = function (ratio) {
             var color1 = 'FF0000';
@@ -70,24 +84,59 @@
                 }],
                 max: max
             }, function (response, currentId, options) {
-                if (treeLayer) {
-                    map.removeLayer(treeLayer);
+                requestId++;
+                var localRequestId = requestId;
+
+                for (var i = 0; i < layers.length; i++) {
+                    map.removeLayer(layers[i]);
                 }
 
-                treeLayer = L.geoJson(response, {
-                    style: function(feature) {
-                        if (feature.properties && feature.properties.start_weight) {
-                            var ratio = feature.properties.start_weight / max;
-                            var color = '#' + gradient(ratio);
-                            var weight = 4 * (1 - ratio);
-                            return {
-                                weight: weight,
-                                color: color,
-                                opacity: 1
-                            };
+                var idx = 0;
+                var stepTime = 1500.0 / response.features.length;
+                var animation = function () {
+                    if (requestId == localRequestId) {
+                        var feature = response.features[idx];
+                        if (feature.geometry.type === "LineString") {
+                            layers.push(L.geoJson(feature, {
+                                style: function(feature) {
+                                    if (feature.properties && feature.properties.start_weight) {
+                                        var ratio = feature.properties.start_weight / max;
+                                        var color = '#' + gradient(ratio);
+                                        var weight = 4 * (1 - ratio);
+                                        return {
+                                            weight: weight,
+                                            color: color,
+                                            opacity: 1
+                                        };
+                                    }
+                                }
+                            }).addTo(map));
                         }
                     }
-                }).addTo(map);
+                    idx++;
+                    if (idx < response.features.length) {
+                        setTimeout(function () {
+                            animation();
+                        }, stepTime);
+                    } else {
+                    }
+                };
+                animation();
+
+                //treeLayer = L.geoJson(response, {
+                //    style: function(feature) {
+                //        if (feature.properties && feature.properties.start_weight) {
+                //            var ratio = feature.properties.start_weight / max;
+                //            var color = '#' + gradient(ratio);
+                //            var weight = 4 * (1 - ratio);
+                //            return {
+                //                weight: weight,
+                //                color: color,
+                //                opacity: 1
+                //            };
+                //        }
+                //    }
+                //}).addTo(map);
             }, function (response, currentId, options) {
                 console.log('ERROR:' + response);
             }, this);
