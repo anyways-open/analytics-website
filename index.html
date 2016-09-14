@@ -106,7 +106,7 @@
                                     if (feature.properties && feature.properties.start_weight) {
                                         var ratio = feature.properties.start_weight / max;
                                         var color = '#' + gradient(ratio);
-                                        var weight = 4 * (1 - ratio);
+                                        var weight = 2 * (1 - ratio);
                                         return {
                                             weight: weight,
                                             color: color,
