@@ -98,24 +98,31 @@
                 var idx = 0;
                 var stepTime = 1500.0 / response.features.length;
                 var animation = function () {
-                    if (requestId == localRequestId) {
-                        var feature = response.features[idx];
-                        if (feature.geometry.type === "LineString") {
-                            layers.push(L.geoJson(feature, {
-                                style: function (feature) {
-                                    if (feature.properties && feature.properties.start_weight) {
-                                        var ratio = feature.properties.start_weight / max;
-                                        var color = '#' + gradient(ratio);
-                                        var weight = 2 * (1 - ratio);
-                                        return {
-                                            weight: weight,
-                                            color: color,
-                                            opacity: 1
-                                        };
-                                    }
-                                }
-                            }).addTo(map));
-                        }
+                var c = 4;
+                while(c > 0) {		
+                	if (idx < response.features.length) {
+	                    if (requestId == localRequestId) {
+	                        var feature = response.features[idx];
+	                        if (feature.geometry.type === "LineString") {
+	                            layers.push(L.geoJson(feature, {
+	                                style: function (feature) {
+	                                    if (feature.properties && feature.properties.start_weight) {
+	                                        var ratio = feature.properties.start_weight / max;
+	                                        var color = '#' + gradient(ratio);
+	                                        var weight = 2 * (1 - ratio);
+	                                        return {
+	                                            weight: weight,
+	                                            color: color,
+	                                            opacity: 1
+	                                        };
+	                                    }
+	                                }
+	                            }).addTo(map));
+	                        }
+	                    }
+                    	}
+			c--;
+	                idx++;
                     }
                     idx++;
                     if (idx < response.features.length) {
