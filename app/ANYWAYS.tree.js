@@ -294,7 +294,18 @@ ANYWAYS.tree = {
 
             if (result.length > 0) {
                 me.selectEdge(result[0].edgeId);
-            }
+            } else {
+				result = me.index.search({
+					minX: loc.lng - 0.001,
+					minY: loc.lat - 0.001,
+					maxX: loc.lng + 0.001,
+					maxY: loc.lat + 0.001
+				});
+				
+				if (result.length > 0) {
+					me.selectEdge(result[0].edgeId);
+				}
+			}
             //for (var i = 0; i < result.length; i++) {
 
             //}
