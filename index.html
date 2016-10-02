@@ -16,6 +16,7 @@
     <script src="app/ANYWAYS.base.js"></script>
     <script src="app/ANYWAYS.JSONP.js"></script>
     <script src="app/api/ANYWAYS.api.js"></script>
+    <script src="app/ANYWAYS.tree.js"></script>
 
 </head>
 <body>
@@ -40,129 +41,26 @@
         };
         geocodingcontrol.addTo(map);
 
-        var max = 450;
-        var requestId = 0;
-        var layers = [];
-
-        var gradient2 = function (color1, color2, ratio) {
-            var hex = function (x) {
-                x = x.toString(16);
-                return (x.length == 1) ? '0' + x : x;
-            };
-
-            var r = Math.ceil(parseInt(color1.substring(0, 2), 16) * ratio + parseInt(color2.substring(0, 2), 16) * (1 - ratio));
-            var g = Math.ceil(parseInt(color1.substring(2, 4), 16) * ratio + parseInt(color2.substring(2, 4), 16) * (1 - ratio));
-            var b = Math.ceil(parseInt(color1.substring(4, 6), 16) * ratio + parseInt(color2.substring(4, 6), 16) * (1 - ratio));
-
-            return hex(r) + hex(g) + hex(b);
-        };
-
-        var gradient = function (ratio) {
-            if (ratio > 0.6)
-            {
-                return gradient2('FF0000', '00FF00', (ratio - 0.6) / 0.4);
-            }
-            return gradient2('00FF00', 'FFFFFF', (ratio / 0.6));
-        };
-
-        var requestRoute = function (loc) {
-            if (marker) {
-                map.removeLayer(marker);
-            }
-            marker = L.marker(loc, {
-                //draggable: true,
-                icon: L.icon({
-                    iconUrl: 'images/marker-source.png',
-                    iconAnchor: [12, 35],
-                    iconSize: [25, 35],
-                    shadowUrl: 'images/marker-shadow.png'
-                })
-            }).addTo(map);
-
-            ANYWAYS.api.tree('http://analytics-api.anyways.eu/europe',
-            {
-                profile: 'car',
-                locations: [{
-                    lat: loc.lat,
-                    lon: loc.lng
-                }],
-                max: max
-            }, function (response, currentId, options) {
-                requestId++;
-                var localRequestId = requestId;
-
-                for (var i = 0; i < layers.length; i++) {
-                    map.removeLayer(layers[i]);
-                }
-
-                var idx = 0;
-                var stepTime = 1500.0 / response.features.length;
-                var animation = function () {
-                var c = 20 * (idx / response.features.length) + 1;
-                while(c > 0) {		
-                	if (idx < response.features.length) {
-	                    if (requestId == localRequestId) {
-	                        var feature = response.features[idx];
-	                        if (feature.geometry.type === "LineString") {
-	                            layers.push(L.geoJson(feature, {
-	                                style: function (feature) {
-	                                    if (feature.properties && feature.properties.start_weight) {
-	                                        var ratio = feature.properties.start_weight / max;
-	                                        var color = '#' + gradient(ratio);
-	                                        var weight = 2 * (1 - ratio);
-	                                        return {
-	                                            weight: weight,
-	                                            color: color,
-	                                            opacity: 1
-	                                        };
-	                                    }
-	                                }
-	                            }).addTo(map));
-	                        }
-	                    }
-                    	}
-			c--;
-	                idx++;
-                    }
-                    if (idx < response.features.length) {
-                        setTimeout(function () {
-                            animation();
-                        }, stepTime);
-                    } else {
-                    }
-                };
-                animation();
-
-                //treeLayer = L.geoJson(response, {
-                //    style: function(feature) {
-                //        if (feature.properties && feature.properties.start_weight) {
-                //            var ratio = feature.properties.start_weight / max;
-                //            var color = '#' + gradient(ratio);
-                //            var weight = 4 * (1 - ratio);
-                //            return {
-                //                weight: weight,
-                //                color: color,
-                //                opacity: 1
-                //            };
-                //        }
-                //    }
-                //}).addTo(map);
-            }, function (response, currentId, options) {
-                console.log('ERROR:' + response);
-            }, this);
-        };
-
-        map.on('click', function (e) {
-            var loc = e.latlng;
-
-            requestRoute(loc);
-        });
-
-        var start = {
+        var carTree = ANYWAYS.tree.create(map, {
             lng: 3.7240487337112427,
             lat: 51.05470154795641
-        };
-        requestRoute(start);
+        }, 'car', '55FF55', 450);
+
+        //var bicycleTree = ANYWAYS.tree.create(map, {
+        //    lng: 3.7240487337112427,
+        //    lat: 51.05470154795641
+        //}, 'bicycle', '55FF55', 450);
+        
+        //carTree.onOverEdge = function (edgeId) {
+        //    console.log("from car -> bicycle");
+        //    bicycleTree.selectEdge(edgeId);
+        //};
+
+        //bicycleTree.onOverEdge = function (edgeId) {
+        //    console.log("from bicycle -> car");
+        //    carTree.selectEdge(edgeId);
+        //};
+
 	</script>
 </body>
 </html>
