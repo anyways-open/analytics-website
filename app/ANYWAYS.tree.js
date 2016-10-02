@@ -286,10 +286,10 @@ ANYWAYS.tree = {
             var loc = e.latlng;
 
             var result = me.index.search({
-                minX: loc.lng - 0.001,
-                minY: loc.lat - 0.001,
-                maxX: loc.lng + 0.001,
-                maxY: loc.lat + 0.001
+                minX: loc.lng - 0.00001,
+                minY: loc.lat - 0.00001,
+                maxX: loc.lng + 0.00001,
+                maxY: loc.lat + 0.00001
             });
 
             if (result.length > 0) {
