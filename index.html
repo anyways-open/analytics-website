@@ -12,6 +12,7 @@
     <script src="leaflet/leaflet-src.js"></script>
     <script src="leaflet-control-geocoder/Control.Geocoder.js"></script>
     <script src="jquery/jquery-3.1.0.min.js"></script>
+    <script src="https://unpkg.com/rbush@2.0.1/rbush.js"></script>
 
     <script src="app/ANYWAYS.base.js"></script>
     <script src="app/ANYWAYS.JSONP.js"></script>
@@ -49,7 +50,7 @@
         //var bicycleTree = ANYWAYS.tree.create(map, {
         //    lng: 3.7240487337112427,
         //    lat: 51.05470154795641
-        //}, 'bicycle', '55FF55', 450);
+        //}, 'bicycle', '5555FF', 450);
         
         //carTree.onOverEdge = function (edgeId) {
         //    console.log("from car -> bicycle");
@@ -60,6 +61,16 @@
         //    console.log("from bicycle -> car");
         //    carTree.selectEdge(edgeId);
         //};
+
+        map.on('click', function (e) {
+            carTree.onClick(e);
+            //bicycleTree.onClick(e);
+        });
+        
+        map.on('mousemove', function (e) {
+            carTree.onMouseMove(e);
+            //bicycleTree.onMouseMove(e);
+        });
 
 	</script>
 </body>
