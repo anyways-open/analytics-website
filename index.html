@@ -58,6 +58,8 @@
 					lng: ANYWAYS.history.state.lon,
 					lat: ANYWAYS.history.state.lat
 				};
+				
+				map.setView([loc.lat, loc.lng], 13)
             } else {
 				if (!ANYWAYS.history.state.lat ||
 					ANYWAYS.history.state.lat != loc.lat ||
