@@ -12,12 +12,15 @@
     <script src="leaflet/leaflet-src.js"></script>
     <script src="leaflet-control-geocoder/Control.Geocoder.js"></script>
     <script src="jquery/jquery-3.1.0.min.js"></script>
+    <script src="jquery.history/extra.js"></script>
+    <script src="jquery.history/jquery.history.js"></script>
     <script src="https://unpkg.com/rbush@2.0.1/rbush.js"></script>
 
     <script src="app/ANYWAYS.base.js"></script>
     <script src="app/ANYWAYS.JSONP.js"></script>
     <script src="app/api/ANYWAYS.api.js"></script>
     <script src="app/ANYWAYS.tree.js"></script>
+    <script src="app/ANYWAYS.history.js"></script>
 
 </head>
 <body>
@@ -41,11 +44,33 @@
             }
         };
         geocodingcontrol.addTo(map);
-
-        var carTree = ANYWAYS.tree.create(map, {
+		
+		var loc = {
             lng: 3.7240487337112427,
             lat: 51.05470154795641
-        }, 'car', '55FF55', 450);
+        };
+		
+		// restore state if possible.
+        if (ANYWAYS.history) {
+            // restore markers.
+            if (ANYWAYS.history.state.lat && ANYWAYS.history.state.lon) {
+				loc = {
+					lng: ANYWAYS.history.state.lon,
+					lat: ANYWAYS.history.state.lat
+				};
+            } else {
+				if (!ANYWAYS.history.state.lat ||
+					ANYWAYS.history.state.lat != loc.lat ||
+					!ANYWAYS.history.state.lon ||
+					ANYWAYS.history.state.lon != loc.lng) {
+					ANYWAYS.history.state.lat = loc.lat;
+					ANYWAYS.history.state.lon = loc.lng;
+					ANYWAYS.history.updateState();
+				}
+			}
+		}
+
+        var carTree = ANYWAYS.tree.create(map, loc, 'car', '55FF55', 450);
 
         //var bicycleTree = ANYWAYS.tree.create(map, {
         //    lng: 3.7240487337112427,
@@ -65,6 +90,19 @@
         map.on('click', function (e) {
             carTree.onClick(e);
             //bicycleTree.onClick(e);
+			
+			var loc = e.latlng;
+			
+			if (ANYWAYS.history) {
+				if (!ANYWAYS.history.state.lat ||
+					ANYWAYS.history.state.lat != loc.lat ||
+					!ANYWAYS.history.state.lon ||
+					ANYWAYS.history.state.lon != loc.lng) {
+					ANYWAYS.history.state.lat = loc.lat;
+					ANYWAYS.history.state.lon = loc.lng;
+					ANYWAYS.history.updateState();
+				}
+			}
         });
         
         map.on('mousemove', function (e) {

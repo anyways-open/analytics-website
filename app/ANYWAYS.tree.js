@@ -175,17 +175,7 @@ ANYWAYS.tree = {
             }, function (response, currentId, options) {
                 requestId++;
                 var localRequestId = requestId;
-
-                // removes the current layers.
-                for (var i = 0; i < layers.length; i++) {
-                    map.removeLayer(layers[i]);
-                }
 				
-                // build the map.
-                for (var i = 0; i < response.edges.length; i++) {
-                    edgesMap[response.edges[i].edgeId] = response.edges[i];
-                }
-
                 idx = 0;
                 var stepTime = 1500.0 / response.edges.length;
                 var animation = function () {
@@ -253,33 +243,70 @@ ANYWAYS.tree = {
                         }, stepTime);
                     }
                 };
-                animation();
-
+				
+				var edgeIdx = 0;
+				var addOne = function(edges, callback) {
+					if (edgeIdx < edges.length) {
+						var endIdx = edgeIdx + 100;
+						while(edgeIdx < edges.length &&
+							  edgeIdx < endIdx) {
+							edgesMap[edges[edgeIdx].edgeId] = edges[edgeIdx];
+							edgeIdx++;
+							if (edgeIdx >= edges.length) { 
+								callback();
+							}
+						}
+						setTimeout(function() { addOne(edges, callback) }, 1);
+					} else {
+						callback();
+					}
+				};
+				addOne(response.edges, animation);			
             }, function (response, currentId, options) {
                 console.log('ERROR:' + response);
             }, this);
         };
-
+		
         me.onClick = function (e) {
             var loc = e.latlng;
 
-            // removes the current layers.
-            if (layers) {
-                for (var i = 0; i < layers.length; i++) {
-                    map.removeLayer(layers[i]);
-                }
-            }
-
-            // removes the current route layers.
-            if (routeLayers) {
-                for (var i = 0; i < routeLayers.length; i++) {
-                    map.removeLayer(routeLayers[i]);
-                }
-            }
-
             idx = 1000000;
-
-            requestRoute(loc);
+			
+			me.edgesMap = {};
+			me.index.clear();
+			
+			// removes the current route layers.
+			if (routeLayers) {
+				for (var i = 0; i < routeLayers.length; i++) {
+					map.removeLayer(routeLayers[i]);
+				}
+			}
+			
+            // removes the current layer.
+            if (layers) {
+				var remove1 = function(layers, callback) {
+					if (layers.length > 0) {
+						var count = 250;
+						while (count > 0 && layers.length > 0) {
+							map.removeLayer(layers[0]);
+							layers.splice(0, 1);
+							count--;
+						}
+						if (layers.length == 0) {
+							callback();
+						} else {
+							setTimeout(function() { remove1(layers, callback) }, 10);
+						}
+					} else {
+						callback();
+					}
+				};
+				remove1(layers, function() {
+					requestRoute(loc);
+				});
+            } else {
+				requestRoute(loc);
+			}			
         };
 
         me.onMouseMove = function (e) {
@@ -306,9 +333,6 @@ ANYWAYS.tree = {
 					me.selectEdge(result[0].edgeId);
 				}
 			}
-            //for (var i = 0; i < result.length; i++) {
-
-            //}
         };
 
         requestRoute(start);
