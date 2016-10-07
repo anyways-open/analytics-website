@@ -165,7 +165,7 @@ ANYWAYS.tree = {
 
             me.index.clear();
 
-            ANYWAYS.api.tree('http://analytics-api.anyways.eu/europe', {
+            ANYWAYS.api.tree('http://analytics-api.anyways.eu/planet', {
                 profile: profile,
                 locations: [{
                     lat: loc.lat,
