@@ -1,6 +1,6 @@
 
 ANYWAYS.tree = {
-    create: function (map, start, profile, color1, max) {
+    create: function (map, start, profile, color1, max, callback) {
         var me = this;
 
         //var max = 450;
@@ -38,6 +38,7 @@ ANYWAYS.tree = {
             }
 
             var routeEdge = edgesMap[edgeId];
+			callback(routeEdge);
             var routeEdgeShape = [];
             var consideredEdgeMap = {};
             while (routeEdge) {

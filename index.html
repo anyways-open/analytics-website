@@ -21,6 +21,7 @@
     <script src="app/api/ANYWAYS.api.js"></script>
     <script src="app/ANYWAYS.tree.js"></script>
     <script src="app/ANYWAYS.history.js"></script>
+    <script src="app/ANYWAYS.utils.js"></script>
 
 </head>
 <body>
@@ -44,6 +45,24 @@
             }
         };
         geocodingcontrol.addTo(map);
+		
+		// add and info control.
+		var info = L.control();
+		info.onAdd = function (map) {
+			this._div = L.DomUtil.create('div', 'info'); // create a div with a class "info"
+			this.update();
+			return this._div;
+		};
+		// method that we will use to update the control based on feature properties passed
+		info.update = function (hms, vehicle) {
+			this._div.innerHTML = '<h4>Link info:</h4>' 
+				+  (hms ?
+					'<b> Vehicle: ' + vehicle + '</b><br />' +
+					'<b> Travel time: ' + hms + '</b><br />'
+				: 
+					"Select link.");
+		};
+		info.addTo(map);
 		
 		var loc = {
             lng: 3.7240487337112427,
@@ -72,7 +91,12 @@
 			}
 		}
 
-        var carTree = ANYWAYS.tree.create(map, loc, 'car', '55FF55', 450);
+		var vehicle = 'car';
+        var carTree = ANYWAYS.tree.create(map, loc, vehicle, '55FF55', 450, function (edge) {
+			var hms = ANYWAYS.utils.toHMS(edge.weight2);
+			info.update(hms, vehicle);
+			console.log(hms);
+		});
 
         //var bicycleTree = ANYWAYS.tree.create(map, {
         //    lng: 3.7240487337112427,
