@@ -103,17 +103,8 @@
                 };
         	
                 center = [loc.lng, loc.lat];
-        	} else {
-                if (!ANYWAYS.history.state.lat ||
-                ANYWAYS.history.state.lat != loc.lat ||
-                    !ANYWAYS.history.state.lon ||
-                    ANYWAYS.history.state.lon != loc.lng) {
-                        ANYWAYS.history.state.lat = loc.lat;
-                        ANYWAYS.history.state.lon = loc.lng;
-                        ANYWAYS.history.updateState();
-                    }
-                }
         	}
+        }
         
         mapboxgl.accessToken = 'pk.eyJ1IjoiYmVuLWFueXdheXMiLCJhIjoiY2lwNXJvdHZoMDAwM3hua29ndm1udHAyaSJ9.-9kEFD5KU7g4lrMJ26HbpQ';
 		var map = new mapboxgl.Map({
