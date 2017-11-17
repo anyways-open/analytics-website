@@ -26,15 +26,101 @@
 
 </head>
 <body>
+        <style>
+                .map-overlay {
+                    font: 12px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+                    position: absolute;
+                    width: 200px;
+                    top: 0;
+                    left: 0;
+                    padding: 10px;
+                }
+                
+                .map-overlay .map-overlay-inner {
+                    background-color: #fff;
+                    box-shadow:0 1px 2px rgba(0, 0, 0, 0.10);
+                    border-radius: 3px;
+                    padding: 10px;
+                    margin-bottom: 10px;
+                }
+                
+                .map-overlay-inner fieldset {
+                    border: none;
+                    padding: 0;
+                    margin: 0 0 10px;
+                }
+                
+                .map-overlay-inner fieldset:last-child {
+                    margin: 0;
+                }
+                
+                .map-overlay-inner select {
+                    width: 100%;
+                }
+                
+                .map-overlay-inner label {
+                    display: block;
+                    font-weight: bold;
+                    margin: 0 0 5px;
+                }
+                
+                .map-overlay-inner button {
+                    display: inline-block;
+                    width: 36px;
+                    height: 20px;
+                    border: none;
+                    cursor: pointer;
+                }
+                
+                .map-overlay-inner button:focus {
+                    outline: none;
+                }
+                
+                .map-overlay-inner button:hover {
+                    box-shadow:inset 0 0 0 3px rgba(0, 0, 0, 0.10);
+                }
+                </style>
+                
     <div id="map"></div>
+    <div class='map-overlay top'>
+            <div class='map-overlay-inner'>
+                <fieldset>
+                    <label>Link info:</label>
+                    <div id='link-info'>Select link</div>
+                </fieldset>
+            </div>
+        </div>
 	<script>
+        // restore state if possible.
+        var center = [3.7240487337112427, 51.05470154795641];
+        if (ANYWAYS.history) {
+        	// restore markers.
+        	if (ANYWAYS.history.state.lat && ANYWAYS.history.state.lon) {
+                loc = {
+                    lng: ANYWAYS.history.state.lon,
+                    lat: ANYWAYS.history.state.lat
+                };
+        	
+                center = [loc.lng, loc.lat];
+        	} else {
+                if (!ANYWAYS.history.state.lat ||
+                ANYWAYS.history.state.lat != loc.lat ||
+                    !ANYWAYS.history.state.lon ||
+                    ANYWAYS.history.state.lon != loc.lng) {
+                        ANYWAYS.history.state.lat = loc.lat;
+                        ANYWAYS.history.state.lon = loc.lng;
+                        ANYWAYS.history.updateState();
+                    }
+                }
+        	}
+        
         mapboxgl.accessToken = 'pk.eyJ1IjoiYmVuLWFueXdheXMiLCJhIjoiY2lwNXJvdHZoMDAwM3hua29ndm1udHAyaSJ9.-9kEFD5KU7g4lrMJ26HbpQ';
 		var map = new mapboxgl.Map({
             container: 'map',
 			hash: false,
             style: 'mapbox://styles/ben-anyways/cj9zvkimu8wjl2spbq2ej7en0',
-            center: [3.7240487337112427, 51.05470154795641],
-            zoom: 13
+            center: center,
+            zoom: 12
             //pitch: 45, // pitch in degrees
             //bearing: -60 // bearing in degrees
         });
@@ -185,6 +271,8 @@
             index.clear();
             edgesMap = {};
 
+            $("#link-info").html("Select link.");
+
 			// if (ANYWAYS.history) {
 			// 	if (!ANYWAYS.history.state.lat ||
 			// 		ANYWAYS.history.state.lat != loc.lat ||
@@ -329,6 +417,14 @@
 
         function selectEdge (edgeId) {
             var routeEdge = edgesMap[edgeId];
+
+            // update UI.
+            var hms = ANYWAYS.utils.toHMS(routeEdge.weight2)
+            $("#link-info").html((hms ?
+					'<b> Vehicle: ' + "Car" + '</b><br />' +
+					'<b> Travel time: ' + hms + '</b><br />'
+				: 
+					"Select link."));
             
             var routeEdgeShape = [];
             var consideredEdgeMap = {};
