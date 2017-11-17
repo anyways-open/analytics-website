@@ -44,14 +44,20 @@
         map.on('load', function (e) {
             var layers = map.getStyle().layers;
             for (var i = 0; i < layers.length; i++) {
-            if (layers[i].type === 'symbol') {
-                firstSymbolId = layers[i].id;
-                break;
+                if (layers[i].type === 'symbol') {
+                    firstSymbolId = layers[i].id;
+                    break;
+                }
             }
-        }
-        });
 
-        
+            map.addSource('tree-trace', {
+                "type": "geojson",
+                "data": {
+                    type: "FeatureCollection",
+                    features: []
+                }
+            });
+        });
 
         var getGradientColor = function (start_color, end_color, percent) {
             // strip the leading # if it's there
@@ -114,17 +120,21 @@
             return getGradientColor(color3, color1, ratio);
         };
         
-
+        var index = new rbush();
+        var edgesMap = {};
         var previous = undefined;
         var requestId = 0;
         map.on('click', function (e) {
             //console.log("click");
             //carTree.onClick(e);
             //bicycleTree.onClick(e);
-			
+            
+            requestId++;
+            var localRequestId = requestId;
+
 			var loc = e.lngLat;
             var profile = 'car';
-            var max = 750;
+            var max = 450;
 
 			// if (ANYWAYS.history) {
 			// 	if (!ANYWAYS.history.state.lat ||
@@ -143,17 +153,37 @@
                     lat: loc.lat,
                     lon: loc.lng
                 }],
-                max: max
+                max: max,
+                id: localRequestId
             }, function (response, currentId, options) {
-                requestId++;
-                var localRequestId = requestId;
+                if (currentId != requestId) {
+                    return;
+                }
 
+                map.getSource("tree-trace").setData({
+                    type: "FeatureCollection",
+                    features: []
+                });
+                index.clear();
+                edgesMap = {};
                 var features = [];
                 for (var idx = 0; idx < response.edges.length; idx++) {
                     var edge = response.edges[idx];
+                    edgesMap[edge.edgeId] = edge;
+
+                    for (var s = 0; s < edge.shape.length - 1; s++) {
+                        index.insert({
+                            minX: Math.min(edge.shape[s][0], edge.shape[s + 1][0]),
+                            minY: Math.min(edge.shape[s][1], edge.shape[s + 1][1]),
+                            maxX: Math.max(edge.shape[s][0], edge.shape[s + 1][0]),
+                            maxY: Math.max(edge.shape[s][1], edge.shape[s + 1][1]),
+                            edgeId: edge.edgeId
+                        });
+                    }
+
                     var ratio = edge.weight1 / max;
                     var color = '#' + gradient(ratio);
-                    var width = 2 * (1 - ratio);
+                    var width = 1 * (1 - ratio);
 
                     features.push({
                         "type": "Feature",
@@ -169,7 +199,7 @@
                             "coordinates": edge.shape
                         }
                     });
-                }             
+                }
                 
                 var featureCollection = {
                     type: "FeatureCollection",
@@ -207,12 +237,31 @@
                         }
                     }
                 }, firstSymbolId);
+                
+                map.addLayer({
+                    "id": "tree-trace-layer",
+                    "type": "line",
+                    "source": "tree-trace",
+                    "layout": {
+                        "line-join": "round",
+                        "line-cap": "round"
+                    },
+                    "paint": {
+                        "line-color": '#' + color1,
+                        "line-width": 7,
+                        "line-opacity": 0.7
+                    }
+                }, "tree-layer");
 
                 var weight = 0;
                 var weightStep = max / 20;
                 var stepTime = 10;
                 var animate = function() {
                     weight += weightStep;
+
+                    if (requestId != currentId) {
+                        return;
+                    }
 
                     map.setFilter('tree-layer', ['<=', 'weight1', weight]);
 
@@ -227,6 +276,75 @@
             }, function (response, currentId, options) {
                 console.log('ERROR:' + response);
             }, this);
+        });
+
+        function selectEdge (edgeId) {
+            var routeEdge = edgesMap[edgeId];
+            
+            var routeEdgeShape = [];
+            var consideredEdgeMap = {};
+            while (routeEdge) {
+                for (var i = routeEdge.shape.length - 1; i >= 0; i--) {
+                    routeEdgeShape.unshift(routeEdge.shape[i]);
+                }
+
+                consideredEdgeMap[routeEdge.edgeId] = true;
+                if (consideredEdgeMap[routeEdge.previousEdgeId] === true) {
+                    break;
+                }
+                routeEdge = edgesMap[routeEdge.previousEdgeId];
+            }
+
+            var edgeLineString = {
+                "type": "Feature",
+                "properties": {},
+                "geometry": {
+                    "type": "LineString",
+                    "coordinates": routeEdgeShape
+                }
+            };
+
+            map.getSource("tree-trace").setData(edgeLineString);
+            // routeLayers.push(L.geoJson(edgeLineString, {
+            //     style: function (feature) {
+            //         //if (feature.properties && feature.properties.weight1) {
+            //         //var ratio = 1; //feature.properties.weight1 / max;
+            //         var color = '#' + color1; // '#' + gradient(0.75);
+            //         var weight = 7; // * (1 - ratio);
+            //         return {
+            //             weight: weight,
+            //             color: color,
+            //             opacity: 0.7
+            //         };
+            //         //}
+            //     }
+            // }).addTo(map));
+        };
+
+        map.on("mousemove", function (e) {
+            var loc = e.lngLat;
+
+            var result = index.search({
+                minX: loc.lng - 0.00001,
+                minY: loc.lat - 0.00001,
+                maxX: loc.lng + 0.00001,
+                maxY: loc.lat + 0.00001
+            });
+
+            if (result.length > 0) {
+                selectEdge(result[0].edgeId);
+            } else {
+                result = index.search({
+                    minX: loc.lng - 0.001,
+                    minY: loc.lat - 0.001,
+                    maxX: loc.lng + 0.001,
+                    maxY: loc.lat + 0.001
+                });
+            
+                if (result.length > 0) {
+                    selectEdge(result[0].edgeId);
+                }
+            }
         });
 	</script>
 </body>

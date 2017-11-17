@@ -204,7 +204,7 @@ ANYWAYS.api = {
             callback: '',
             dataType: "jsonp"
         }).done(function (response) {
-            callback(response);
+            callback(response, currentId, options);
           });
         //ANYWAYS.JSONP.call(
         //    url + requestString,
