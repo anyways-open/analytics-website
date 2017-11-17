@@ -8,7 +8,8 @@
 	<script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.42.0/mapbox-gl.js'></script>    
     <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.42.0/mapbox-gl.css' rel='stylesheet' />    
 
-	<script src='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v2.0.1/mapbox-gl-geocoder.js'></script>
+    <script src='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v2.1.1/mapbox-gl-geocoder.min.js'></script>
+    <link rel='stylesheet' href='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v2.1.1/mapbox-gl-geocoder.css' type='text/css' />
     
     <link rel="stylesheet" href="index.css" type="text/css" />
 
@@ -124,7 +125,23 @@
             //pitch: 45, // pitch in degrees
             //bearing: -60 // bearing in degrees
         });
-        
+        var geoCoder = new MapboxGeocoder({
+            accessToken: mapboxgl.accessToken
+        });
+        map.addControl(geoCoder);
+        geoCoder.on("result", function(e)
+        {
+            if (e.result &&
+                e.result.center) {
+                    buildTree({
+                        lngLat: {
+                            lat: e.result.center[1],
+                            lng: e.result.center[0]
+                        }
+                    });
+            }
+        });
+
         // Find the index of the first symbol layer in the map style
         var firstSymbolId = undefined;
         map.on('load', function (e) {
@@ -273,16 +290,16 @@
 
             $("#link-info").html("Select link.");
 
-			// if (ANYWAYS.history) {
-			// 	if (!ANYWAYS.history.state.lat ||
-			// 		ANYWAYS.history.state.lat != loc.lat ||
-			// 		!ANYWAYS.history.state.lon ||
-			// 		ANYWAYS.history.state.lon != loc.lng) {
-			// 		ANYWAYS.history.state.lat = loc.lat;
-			// 		ANYWAYS.history.state.lon = loc.lng;
-			// 		ANYWAYS.history.updateState();
-			// 	}
-            // }
+			if (ANYWAYS.history) {
+				if (!ANYWAYS.history.state.lat ||
+					ANYWAYS.history.state.lat != loc.lat ||
+					!ANYWAYS.history.state.lon ||
+					ANYWAYS.history.state.lon != loc.lng) {
+					ANYWAYS.history.state.lat = loc.lat;
+					ANYWAYS.history.state.lon = loc.lng;
+					ANYWAYS.history.updateState();
+				}
+            }
             
             ANYWAYS.api.tree('http://analytics-api.anyways.eu/planet', {
                 profile: profile,
