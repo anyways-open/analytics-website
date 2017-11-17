@@ -6,11 +6,7 @@
     <title>Analytics Anyways</title>
 
     <link rel="stylesheet" href="index.css" type="text/css" />
-    <link rel="stylesheet" href="leaflet/leaflet.css" type="text/css" />
-    <link rel="stylesheet" href="leaflet-control-geocoder/Control.Geocoder.css" type="text/css" />
 
-    <script src="leaflet/leaflet-src.js"></script>
-    <script src="leaflet-control-geocoder/Control.Geocoder.js"></script>
     <script src="jquery/jquery-3.1.0.min.js"></script>
     <script src="jquery.history/extra.js"></script>
     <script src="jquery.history/jquery.history.js"></script>
@@ -27,114 +23,6 @@
 <body>
     <div id="map"></div>
 	<script>
-        var map = L.map('map').setView([51.05470154795641, 3.7240487337112427], 13);
-        var marker = null;
-
-        L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/dark-v9/tiles/256/{z}/{x}/{y}?access_token=pk.eyJ1IjoiZXVyb3N0YXRpb24iLCJhIjoickVCa3JCTSJ9.EdN8BIazD16z2PHyGShqtA', {
-            attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>',
-            maxZoom: 18
-        }).addTo(map);
-
-        // add and create routing control.
-        var geocodingcontrol = L.Control.geocoder({
-                geocoder: L.Control.Geocoder.nominatim()
-            });
-        geocodingcontrol.markGeocode = function (result) {
-            if (result.center) {
-                map.panTo(result.center);
-            }
-        };
-        geocodingcontrol.addTo(map);
-		
-		// add and info control.
-		var info = L.control();
-		info.onAdd = function (map) {
-			this._div = L.DomUtil.create('div', 'info'); // create a div with a class "info"
-			this.update();
-			return this._div;
-		};
-		// method that we will use to update the control based on feature properties passed
-		info.update = function (hms, vehicle) {
-			this._div.innerHTML = '<h4>Link info:</h4>' 
-				+  (hms ?
-					'<b> Vehicle: ' + vehicle + '</b><br />' +
-					'<b> Travel time: ' + hms + '</b><br />'
-				: 
-					"Select link.");
-		};
-		info.addTo(map);
-		
-		var loc = {
-            lng: 3.7240487337112427,
-            lat: 51.05470154795641
-        };
-		
-		// restore state if possible.
-        if (ANYWAYS.history) {
-            // restore markers.
-            if (ANYWAYS.history.state.lat && ANYWAYS.history.state.lon) {
-				loc = {
-					lng: ANYWAYS.history.state.lon,
-					lat: ANYWAYS.history.state.lat
-				};
-				
-				map.setView([loc.lat, loc.lng], 13)
-            } else {
-				if (!ANYWAYS.history.state.lat ||
-					ANYWAYS.history.state.lat != loc.lat ||
-					!ANYWAYS.history.state.lon ||
-					ANYWAYS.history.state.lon != loc.lng) {
-					ANYWAYS.history.state.lat = loc.lat;
-					ANYWAYS.history.state.lon = loc.lng;
-					ANYWAYS.history.updateState();
-				}
-			}
-		}
-
-		var vehicle = 'car';
-        var carTree = ANYWAYS.tree.create(map, loc, vehicle, '55FF55', 450, function (edge) {
-			var hms = ANYWAYS.utils.toHMS(edge.weight2);
-			info.update(hms, vehicle);
-			console.log(hms);
-		});
-
-        //var bicycleTree = ANYWAYS.tree.create(map, {
-        //    lng: 3.7240487337112427,
-        //    lat: 51.05470154795641
-        //}, 'bicycle', '5555FF', 450);
-        
-        //carTree.onOverEdge = function (edgeId) {
-        //    console.log("from car -> bicycle");
-        //    bicycleTree.selectEdge(edgeId);
-        //};
-
-        //bicycleTree.onOverEdge = function (edgeId) {
-        //    console.log("from bicycle -> car");
-        //    carTree.selectEdge(edgeId);
-        //};
-
-        map.on('click', function (e) {
-            carTree.onClick(e);
-            //bicycleTree.onClick(e);
-			
-			var loc = e.latlng;
-			
-			if (ANYWAYS.history) {
-				if (!ANYWAYS.history.state.lat ||
-					ANYWAYS.history.state.lat != loc.lat ||
-					!ANYWAYS.history.state.lon ||
-					ANYWAYS.history.state.lon != loc.lng) {
-					ANYWAYS.history.state.lat = loc.lat;
-					ANYWAYS.history.state.lon = loc.lng;
-					ANYWAYS.history.updateState();
-				}
-			}
-        });
-        
-        map.on('mousemove', function (e) {
-            carTree.onMouseMove(e);
-            //bicycleTree.onMouseMove(e);
-        });
 
 	</script>
 </body>
