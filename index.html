@@ -124,7 +124,7 @@
 			
 			var loc = e.lngLat;
             var profile = 'car';
-            var max = 450;
+            var max = 750;
 
 			// if (ANYWAYS.history) {
 			// 	if (!ANYWAYS.history.state.lat ||
@@ -148,116 +148,82 @@
                 requestId++;
                 var localRequestId = requestId;
 
-                // define animation function.
-                var stepTime = 1500.0 / response.edges.length;
-                var idx = 0;                
+                var features = [];
+                for (var idx = 0; idx < response.edges.length; idx++) {
+                    var edge = response.edges[idx];
+                    var ratio = edge.weight1 / max;
+                    var color = '#' + gradient(ratio);
+                    var width = 2 * (1 - ratio);
+
+                    features.push({
+                        "type": "Feature",
+                        "properties": {
+                            "weight1": edge.weight1,
+                            "weight2": edge.weight2,
+                            "edgeId": edge.edgeId,
+                            "color": color,
+                            "width": width
+                        },
+                        "geometry": {
+                            "type": "LineString",
+                            "coordinates": edge.shape
+                        }
+                    });
+                }             
+                
+                var featureCollection = {
+                    type: "FeatureCollection",
+                    features: features
+                };
+
+                // Add a GeoJSON source containing place coordinates and information.
+                var treeSource = map.getSource("tree");
+                if (treeSource) {
+                    treeSource.setData(featureCollection);
+                } else {
+                    map.addSource('tree', {
+                        "type": "geojson",
+                        "data": featureCollection
+                    });
+                }
+                
+                map.addLayer({
+                    "id": "tree-layer",
+                    "type": "line",
+                    "source": "tree",
+                    "layout": {
+                        "line-join": "round",
+                        "line-cap": "round"
+                    },
+                    "filter": ['<=', 'weight1', 0],
+                    "paint": {
+                        "line-color": {
+                            'type': 'identity',
+                            'property': 'color'
+                        },
+                        "line-width": {
+                            'type': 'identity',
+                            'property': 'width'
+                        }
+                    }
+                }, firstSymbolId);
+
+                var weight = 0;
+                var weightStep = max / 20;
+                var stepTime = 10;
                 var animate = function() {
-                    previous = response;
+                    weight += weightStep;
 
-                    var features = [];
-                    var nextStep = idx + 20;
-                    while (idx < nextStep && 
-                        idx < response.edges.length) {
-                        var edge = response.edges[idx];
+                    map.setFilter('tree-layer', ['<=', 'weight1', weight]);
 
-                        var ratio = edge.weight1 / max;
-                        var color = '#' + gradient(ratio);
-                        var width = 2 * (1 - ratio);
-
-                        features.push({
-                                            "type": "Feature",
-                                            "properties": {
-                                                "weight1": edge.weight1,
-                                                "weight2": edge.weight2,
-                                                "edgeId": edge.edgeId,
-                                                "color": color,
-                                                "width": width
-                                            },
-                                            "geometry": {
-                                                "type": "LineString",
-                                                "coordinates": edge.shape
-                                            }
-                                        });
-                        idx++;
-                    }   
-                                        
-                        var featureCollection = {
-                                type: "FeatureCollection",
-                                features: features
-                        };
-
-                        var layerId = "tree" + idx;
-                        var source = map.getSource(layerId);
-                        if (!source) {
-                            map.addLayer({
-                                "id": "tree" + idx,
-                                "type": "line",
-                                "source": {
-                                    "type": "geojson",
-                                    "data": featureCollection
-                                },
-                                "layout": {
-                                    "line-join": "round",
-                                    "line-cap": "round"
-                                },
-                                "paint": {
-                                    "line-color": {
-                                        'type': 'identity',
-                                        'property': 'color'
-                                    },
-                                    "line-width": {
-                                        'type': 'identity',
-                                        'property': 'width'
-                                    }
-                                }
-                            }, firstSymbolId);
-                        } else {
-                            source.setData(featureCollection);
-                        }                
-                        
-
-                    if (idx < response.edges.length) {
+                    if (weight < max) {
                         setTimeout(function () {
                             animate();
                         }, stepTime);
                     }
-                }
+                };
 
-                if (previous) { // there is a previous request, remove data first.
-                    var empty = {
-                                type: "FeatureCollection",
-                                features: []
-                        };
-                    var reverseStepTime = 500.0 / previous.edges.length;
-                    var reverseIdx = previous.edges.length;
-                    var reverseAnimation = function() {
-                        var nextStep = reverseIdx - 80;
-                        while (reverseIdx > nextStep && 
-                            reverseIdx >= 0) {
-                                
-                            var layerId = "tree" + reverseIdx;
-                            var source = map.getSource(layerId);
-                            if (source) {
-                                source.setData(empty);
-                            }
-
-                            reverseIdx--;
-                        }
-
-                        setTimeout(function () {
-                            if (reverseIdx > 0) {
-                                reverseAnimation();
-                            } else {
-                                animate();
-                            }
-                        }, reverseStepTime);
-                    }
-
-                    reverseAnimation();
-                } else {
-                    animate();
-                }
-
+                animate();
             }, function (response, currentId, options) {
                 console.log('ERROR:' + response);
             }, this);
