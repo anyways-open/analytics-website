@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Analytics Anyways</title>
 
+	<script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.42.0/mapbox-gl.js'></script>    
+    <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.42.0/mapbox-gl.css' rel='stylesheet' />    
+
+	<script src='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v2.0.1/mapbox-gl-geocoder.js'></script>
+    
     <link rel="stylesheet" href="index.css" type="text/css" />
 
     <script src="jquery/jquery-3.1.0.min.js"></script>
@@ -23,7 +28,240 @@
 <body>
     <div id="map"></div>
 	<script>
+        mapboxgl.accessToken = 'pk.eyJ1IjoiYmVuLWFueXdheXMiLCJhIjoiY2lwNXJvdHZoMDAwM3hua29ndm1udHAyaSJ9.-9kEFD5KU7g4lrMJ26HbpQ';
+		var map = new mapboxgl.Map({
+            container: 'map',
+			hash: false,
+            style: 'mapbox://styles/ben-anyways/cj9zvkimu8wjl2spbq2ej7en0',
+            center: [3.7240487337112427, 51.05470154795641],
+            zoom: 13
+            //pitch: 45, // pitch in degrees
+            //bearing: -60 // bearing in degrees
+        });
+        
+        // Find the index of the first symbol layer in the map style
+        var firstSymbolId = undefined;
+        map.on('load', function (e) {
+            var layers = map.getStyle().layers;
+            for (var i = 0; i < layers.length; i++) {
+            if (layers[i].type === 'symbol') {
+                firstSymbolId = layers[i].id;
+                break;
+            }
+        }
+        });
 
+        
+
+        var getGradientColor = function (start_color, end_color, percent) {
+            // strip the leading # if it's there
+            start_color = start_color.replace(/^\s*#|\s*$/g, '');
+            end_color = end_color.replace(/^\s*#|\s*$/g, '');
+
+            // convert 3 char codes --> 6, e.g. `E0F` --> `EE00FF`
+            if (start_color.length == 3) {
+                start_color = start_color.replace(/(.)/g, '$1$1');
+            }
+
+            if (end_color.length == 3) {
+                end_color = end_color.replace(/(.)/g, '$1$1');
+            }
+
+            // get colors
+            var start_red = parseInt(start_color.substr(0, 2), 16),
+                start_green = parseInt(start_color.substr(2, 2), 16),
+                start_blue = parseInt(start_color.substr(4, 2), 16);
+
+            var end_red = parseInt(end_color.substr(0, 2), 16),
+                end_green = parseInt(end_color.substr(2, 2), 16),
+                end_blue = parseInt(end_color.substr(4, 2), 16);
+
+            // calculate new color
+            var diff_red = end_red - start_red;
+            var diff_green = end_green - start_green;
+            var diff_blue = end_blue - start_blue;
+
+            diff_red = ((diff_red * percent) + start_red).toString(16).split('.')[0];
+            diff_green = ((diff_green * percent) + start_green).toString(16).split('.')[0];
+            diff_blue = ((diff_blue * percent) + start_blue).toString(16).split('.')[0];
+
+            // ensure 2 digits by color
+            if (diff_red.length == 1)
+                diff_red = '0' + diff_red
+
+            if (diff_green.length == 1)
+                diff_green = '0' + diff_green
+
+            if (diff_blue.length == 1)
+                diff_blue = '0' + diff_blue
+
+            return '' + diff_red + diff_green + diff_blue;
+        };
+
+        var color1 = '55FF55';
+        var color3 = 'FFFFFF';
+
+        var gradient = function (ratio) {
+            //if (ratio > 0.6)
+            //{
+            //    return gradient2(color1, color2, (ratio - 0.6) / 0.4);
+            //}
+            if (ratio >= 1) {
+                return color1;
+            } else if (ratio <= 0) {
+                return color3;
+            }
+            return getGradientColor(color3, color1, ratio);
+        };
+        
+
+        var previous = undefined;
+        var requestId = 0;
+        map.on('click', function (e) {
+            //console.log("click");
+            //carTree.onClick(e);
+            //bicycleTree.onClick(e);
+			
+			var loc = e.lngLat;
+            var profile = 'car';
+            var max = 450;
+
+			// if (ANYWAYS.history) {
+			// 	if (!ANYWAYS.history.state.lat ||
+			// 		ANYWAYS.history.state.lat != loc.lat ||
+			// 		!ANYWAYS.history.state.lon ||
+			// 		ANYWAYS.history.state.lon != loc.lng) {
+			// 		ANYWAYS.history.state.lat = loc.lat;
+			// 		ANYWAYS.history.state.lon = loc.lng;
+			// 		ANYWAYS.history.updateState();
+			// 	}
+            // }
+            
+            ANYWAYS.api.tree('http://analytics-api.anyways.eu/planet', {
+                profile: profile,
+                locations: [{
+                    lat: loc.lat,
+                    lon: loc.lng
+                }],
+                max: max
+            }, function (response, currentId, options) {
+                requestId++;
+                var localRequestId = requestId;
+
+                // define animation function.
+                var stepTime = 1500.0 / response.edges.length;
+                var idx = 0;                
+                var animate = function() {
+                    previous = response;
+
+                    var features = [];
+                    var nextStep = idx + 20;
+                    while (idx < nextStep && 
+                        idx < response.edges.length) {
+                        var edge = response.edges[idx];
+
+                        var ratio = edge.weight1 / max;
+                        var color = '#' + gradient(ratio);
+                        var width = 2 * (1 - ratio);
+
+                        features.push({
+                                            "type": "Feature",
+                                            "properties": {
+                                                "weight1": edge.weight1,
+                                                "weight2": edge.weight2,
+                                                "edgeId": edge.edgeId,
+                                                "color": color,
+                                                "width": width
+                                            },
+                                            "geometry": {
+                                                "type": "LineString",
+                                                "coordinates": edge.shape
+                                            }
+                                        });
+                        idx++;
+                    }   
+                                        
+                        var featureCollection = {
+                                type: "FeatureCollection",
+                                features: features
+                        };
+
+                        var layerId = "tree" + idx;
+                        var source = map.getSource(layerId);
+                        if (!source) {
+                            map.addLayer({
+                                "id": "tree" + idx,
+                                "type": "line",
+                                "source": {
+                                    "type": "geojson",
+                                    "data": featureCollection
+                                },
+                                "layout": {
+                                    "line-join": "round",
+                                    "line-cap": "round"
+                                },
+                                "paint": {
+                                    "line-color": {
+                                        'type': 'identity',
+                                        'property': 'color'
+                                    },
+                                    "line-width": {
+                                        'type': 'identity',
+                                        'property': 'width'
+                                    }
+                                }
+                            }, firstSymbolId);
+                        } else {
+                            source.setData(featureCollection);
+                        }                
+                        
+
+                    if (idx < response.edges.length) {
+                        setTimeout(function () {
+                            animate();
+                        }, stepTime);
+                    }
+                }
+
+                if (previous) { // there is a previous request, remove data first.
+                    var empty = {
+                                type: "FeatureCollection",
+                                features: []
+                        };
+                    var reverseStepTime = 500.0 / previous.edges.length;
+                    var reverseIdx = previous.edges.length;
+                    var reverseAnimation = function() {
+                        var nextStep = reverseIdx - 80;
+                        while (reverseIdx > nextStep && 
+                            reverseIdx >= 0) {
+                                
+                            var layerId = "tree" + reverseIdx;
+                            var source = map.getSource(layerId);
+                            if (source) {
+                                source.setData(empty);
+                            }
+
+                            reverseIdx--;
+                        }
+
+                        setTimeout(function () {
+                            if (reverseIdx > 0) {
+                                reverseAnimation();
+                            } else {
+                                animate();
+                            }
+                        }, reverseStepTime);
+                    }
+
+                    reverseAnimation();
+                } else {
+                    animate();
+                }
+
+            }, function (response, currentId, options) {
+                console.log('ERROR:' + response);
+            }, this);
+        });
 	</script>
 </body>
 </html>
