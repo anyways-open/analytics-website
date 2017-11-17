@@ -57,6 +57,24 @@
                     features: []
                 }
             });
+            map.addSource('tree-center', {
+                "type": "geojson",
+                "data": {
+                    type: "FeatureCollection",
+                    features: []
+                }
+            });
+            
+            map.addLayer({
+                "id": "tree-center-layer",
+                "type": "circle",
+                "source": "tree-center",
+                "paint": {
+                    "circle-radius": 10,
+                    "circle-color": '#' + color1,
+                    "circle-opacity": 0.7
+                }
+            }, firstSymbolId);
         });
 
         var getGradientColor = function (start_color, end_color, percent) {
@@ -120,21 +138,30 @@
             return getGradientColor(color3, color1, ratio);
         };
         
-        var index = new rbush();
-        var edgesMap = {};
-        var previous = undefined;
-        var requestId = 0;
-        map.on('click', function (e) {
-            //console.log("click");
-            //carTree.onClick(e);
-            //bicycleTree.onClick(e);
-            
+        function buildTree (e) {
             requestId++;
             var localRequestId = requestId;
 
 			var loc = e.lngLat;
             var profile = 'car';
-            var max = 450;
+            var max = 500;
+
+            map.getSource("tree-center").setData({
+                "type": "FeatureCollection",
+                "features": [
+                {
+                    "type": "Feature",
+                    "properties": {},
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": [
+                            loc.lng,
+                            loc.lat
+                        ]
+                    }
+                }
+                ]
+            });
 
 			// if (ANYWAYS.history) {
 			// 	if (!ANYWAYS.history.state.lat ||
@@ -251,7 +278,7 @@
                         "line-width": 7,
                         "line-opacity": 0.7
                     }
-                }, "tree-layer");
+                }, "tree-center-layer");
 
                 var weight = 0;
                 var weightStep = max / 20;
@@ -276,7 +303,13 @@
             }, function (response, currentId, options) {
                 console.log('ERROR:' + response);
             }, this);
-        });
+        }
+        
+        var index = new rbush();
+        var edgesMap = {};
+        var previous = undefined;
+        var requestId = 0;
+        map.on('click', buildTree);
 
         function selectEdge (edgeId) {
             var routeEdge = edgesMap[edgeId];
